@@ -255,7 +255,8 @@ def generate_dendrogram(graph,
                         weight='weight',
                         resolution=1.,
                         randomize=None,
-                        random_state=None):
+                        random_state=None,
+                        level=-1):
     """Find communities in the graph and return the associated dendrogram
 
     A dendrogram is a tree and each level is a partition of the graph nodes.
@@ -351,19 +352,34 @@ def generate_dendrogram(graph,
     mod = new_mod
     current_graph = induced_graph(partition, current_graph, weight)
     status.init(current_graph, weight)
-
-    while True:
-        __one_level(current_graph, status, weight, resolution, random_state)
-        new_mod = __modularity(status)
-        if new_mod - mod < __MIN:
-            break
-        partition = __renumber(status.node2com)
-        status_list.append(partition)
-        mod = new_mod
-        current_graph = induced_graph(partition, current_graph, weight)
-        status.init(current_graph, weight)
-    return status_list[:]
-
+    if level == 0:
+        return status_list[:]
+    elif level == -1:
+        while True:
+            __one_level(current_graph, status, weight, resolution, random_state)
+            new_mod = __modularity(status)
+            if new_mod - mod < __MIN:
+                break
+            partition = __renumber(status.node2com)
+            status_list.append(partition)
+            mod = new_mod
+            current_graph = induced_graph(partition, current_graph, weight)
+            status.init(current_graph, weight)
+        return status_list[:]
+    else:
+        l = 1
+        while l <= level:
+            __one_level(current_graph, status, weight, resolution, random_state)
+            new_mod = __modularity(status)
+            if new_mod - mod < __MIN:
+               break
+            partition = __renumber(status.node2com)
+            status_list.append(partition)
+            mod = new_mod
+            current_graph = induced_graph(partition, current_graph, weight)
+            status.init(current_graph, weight)
+            l += 1
+        return status_list[:]
 
 def induced_graph(partition, graph, weight="weight"):
     """Produce the graph where nodes are the communities
